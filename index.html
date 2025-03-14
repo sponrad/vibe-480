@@ -23,7 +23,7 @@
     <h2>480</h2>
     <p>2048, but using doubling numbers until 480 instead, use arrow keys to combine the blocks.</p>
     <canvas id="gameCanvas" width="400" height="400"></canvas>
-    <button id="restart">Restart Game</button>
+    <button id="restart" onClick="restart()">Restart Game</button>
 
     <script>
      const canvas = document.getElementById("gameCanvas");
@@ -37,6 +37,13 @@
      };
      let animating = false;
      let gameWon = false;
+
+     function restart() {
+       board.forEach(row => row.fill(0));
+       spawnTile();
+       spawnTile();
+       drawBoard();
+     }
 
      function drawBoard() {
        ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -161,6 +168,7 @@
      }
 
      document.addEventListener("keydown", (e) => {
+       e.preventDefault();
        if (animating || gameWon) return;
        if (e.key === "ArrowLeft") move("left");
        if (e.key === "ArrowRight") move("right");
@@ -168,6 +176,7 @@
        if (e.key === "ArrowDown") move("down");
      });
 
+     spawnTile();
      spawnTile();
      drawBoard();
     </script>
