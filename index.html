@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Career Months Game</title>
+    <title>2048 but get to 480 instead</title>
     <style>
      canvas {
          border: 1px solid black;
@@ -20,7 +20,8 @@
     </style>
   </head>
   <body>
-    <h2>Career Months Game</h2>
+    <h2>480</h2>
+    <p>2048, but using doubling numbers until 480 instead (which is the average number of months in a career, use them well!)</p>
     <canvas id="gameCanvas" width="400" height="400"></canvas>
     <button id="restart">Restart Game</button>
 
@@ -35,6 +36,7 @@
        120: "#f59563", 240: "#f67c5f", 480: "#f65e3b"
      };
      let animating = false;
+     let gameWon = false;
 
      function drawBoard() {
        ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -42,6 +44,9 @@
          for (let c = 0; c < size; c++) {
            drawTile(r, c, board[r][c]);
          }
+       }
+       if (gameWon) {
+         showWinMessage();
        }
      }
 
@@ -54,6 +59,15 @@
          ctx.textAlign = "center";
          ctx.fillText(value, col * tileSize + tileSize / 2, row * tileSize + tileSize / 2 + 10);
        }
+     }
+
+     function showWinMessage() {
+       ctx.fillStyle = "rgba(255, 255, 255, 0.8)";
+       ctx.fillRect(0, 0, canvas.width, canvas.height);
+       ctx.fillStyle = "#333";
+       ctx.font = "bold 40px Arial";
+       ctx.textAlign = "center";
+       ctx.fillText("What a career!", canvas.width / 2, canvas.height / 2);
      }
 
      function spawnTile() {
@@ -75,6 +89,9 @@
          if (filtered[i] === filtered[i + 1] && filtered[i] !== 480) {
            filtered[i] *= 2;
            filtered.splice(i + 1, 1);
+           if (filtered[i] === 480) {
+             gameWon = true;
+           }
          }
        }
        while (filtered.length < size) filtered.push(0);
@@ -82,6 +99,7 @@
      }
 
      function move(direction) {
+       if (gameWon) return;
        let moved = false;
        let prevBoard = JSON.stringify(board);
        let newBoard = JSON.parse(prevBoard);
@@ -106,7 +124,9 @@
          animating = true;
          animateMove(newBoard, () => {
            board.splice(0, board.length, ...newBoard);
-           spawnTile();
+           if (!gameWon) {
+             spawnTile();
+           }
            drawBoard();
            animating = false;
          });
@@ -115,8 +135,8 @@
 
      function animateMove(targetBoard, callback) {
        let frames = 10;
-       let startBoard = JSON.parse(JSON.stringify(board));
        let frame = 0;
+       let startBoard = JSON.parse(JSON.stringify(board));
 
        function step() {
          ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -124,7 +144,8 @@
            for (let c = 0; c < size; c++) {
              let startVal = startBoard[r][c];
              let targetVal = targetBoard[r][c];
-             let interpolatedVal = startVal + (targetVal - startVal) * (frame / frames);
+             let progress = frame / frames;
+             let interpolatedVal = startVal * (1 - progress) + targetVal * progress;
              drawTile(r, c, Math.round(interpolatedVal));
            }
          }
@@ -140,7 +161,7 @@
      }
 
      document.addEventListener("keydown", (e) => {
-       if (animating) return;
+       if (animating || gameWon) return;
        if (e.key === "ArrowLeft") move("left");
        if (e.key === "ArrowRight") move("right");
        if (e.key === "ArrowUp") move("up");
