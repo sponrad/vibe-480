@@ -1,0 +1,174 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Career Months Game</title>
+    <style>
+        canvas {
+            border: 1px solid black;
+        }
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-family: Arial, sans-serif;
+        }
+        #restart {
+            margin: 10px;
+            padding: 5px 15px;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+    <h2>Career Months Game</h2>
+    <canvas id="gameCanvas" width="400" height="400"></canvas>
+    <button id="restart">Restart Game</button>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const gridSize = 4;
+        const tileSize = 100;
+        const tileMargin = 10;
+
+        let grid = [];
+        const values = [15, 30, 60, 120, 240, 480];
+
+        function initGame() {
+            grid = Array(gridSize).fill().map(() => Array(gridSize).fill(0));
+            addNewTile();
+            addNewTile();
+            drawGrid();
+        }
+
+        function addNewTile() {
+            let emptyTiles = [];
+            for (let i = 0; i < gridSize; i++) {
+                for (let j = 0; j < gridSize; j++) {
+                    if (grid[i][j] === 0) {
+                        emptyTiles.push({x: i, y: j});
+                    }
+                }
+            }
+            if (emptyTiles.length > 0) {
+                let tile = emptyTiles[Math.floor(Math.random() * emptyTiles.length)];
+                grid[tile.x][tile.y] = 15;
+            }
+        }
+
+        function drawGrid() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            for (let i = 0; i < gridSize; i++) {
+                for (let j = 0; j < gridSize; j++) {
+                    let value = grid[i][j];
+                    let x = j * tileSize + tileMargin;
+                    let y = i * tileSize + tileMargin;
+
+                    // Draw tile background
+                    ctx.fillStyle = value === 0 ? '#cdc1b4' : getTileColor(value);
+                    ctx.fillRect(x, y, tileSize - tileMargin * 2, tileSize - tileMargin * 2);
+
+                    // Draw number
+                    if (value !== 0) {
+                        ctx.fillStyle = '#ffffff';
+                        ctx.font = 'bold 30px Arial';
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        ctx.fillText(value, x + (tileSize - tileMargin * 2) / 2, y + (tileSize - tileMargin * 2) / 2);
+                    }
+                }
+            }
+        }
+
+        function getTileColor(value) {
+            switch(value) {
+                case 15: return '#eee4da';
+                case 30: return '#ede0c8';
+                case 60: return '#f2b179';
+                case 120: return '#f59563';
+                case 240: return '#f67c5f';
+                case 480: return '#f65e3b';
+                default: return '#cdc1b4';
+            }
+        }
+
+        function move(direction) {
+            let moved = false;
+            let newGrid = JSON.parse(JSON.stringify(grid));
+
+            if (direction === 'up' || direction === 'down') {
+                for (let j = 0; j < gridSize; j++) {
+                    let column = [];
+                    for (let i = 0; i < gridSize; i++) {
+                        column.push(newGrid[i][j]);
+                    }
+                    let newColumn = slideAndMerge(column, direction === 'up');
+                    for (let i = 0; i < gridSize; i++) {
+                        if (newGrid[i][j] !== newColumn[i]) moved = true;
+                        newGrid[i][j] = newColumn[i];
+                    }
+                }
+            } else {
+                for (let i = 0; i < gridSize; i++) {
+                    let row = newGrid[i].slice();
+                    let newRow = slideAndMerge(row, direction === 'left');
+                    if (JSON.stringify(newGrid[i]) !== JSON.stringify(newRow)) moved = true;
+                    newGrid[i] = newRow;
+                }
+            }
+
+            if (moved) {
+                grid = newGrid;
+                addNewTile();
+                drawGrid();
+                checkGameOver();
+            }
+        }
+
+        function slideAndMerge(line, towardsStart) {
+            let result = line.filter(x => x !== 0);
+            if (!towardsStart) result.reverse();
+
+            for (let i = 0; i < result.length - 1; i++) {
+                if (result[i] === result[i + 1] && values.includes(result[i])) {
+                    result[i] *= 2;
+                    result.splice(i + 1, 1);
+                }
+            }
+
+            while (result.length < gridSize) {
+                result[towardsStart ? 'push' : 'unshift'](0);
+            }
+            if (!towardsStart) result.reverse();
+            return result;
+        }
+
+        function checkGameOver() {
+            for (let i = 0; i < gridSize; i++) {
+                for (let j = 0; j < gridSize; j++) {
+                    if (grid[i][j] === 0) return;
+                    if (i < gridSize - 1 && grid[i][j] === grid[i + 1][j]) return;
+                    if (j < gridSize - 1 && grid[i][j] === grid[i][j + 1]) return;
+                }
+            }
+            alert('Game Over!');
+        }
+
+        document.addEventListener('keydown', (e) => {
+            switch(e.key) {
+                case 'ArrowUp': move('up'); break;
+                case 'ArrowDown': move('down'); break;
+                case 'ArrowLeft': move('left'); break;
+                case 'ArrowRight': move('right'); break;
+            }
+        });
+
+        document.getElementById('restart').addEventListener('click', initGame);
+
+        // Start the game
+        initGame();
+    </script>
+</body>
+</html>
